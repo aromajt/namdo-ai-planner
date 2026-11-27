@@ -1,0 +1,5 @@
+# 로컬 PC 전체 기능 (CLIP 이미지 검색 + 테스트). GPU가 있으면 torch는 CUDA 버전을 설치하세요.
+-r requirements.txt
+torch==2.13.0
+open_clip_torch==4.2.2
+pytest

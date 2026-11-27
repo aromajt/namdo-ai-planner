@@ -1,0 +1,23 @@
+# 비밀값 — 절대 커밋 금지
+.streamlit/secrets.toml
+.env
+
+# 운영 기록·캐시 (개인 PC에서만)
+data/app.db
+data/llm_cache.db
+data/*.log
+data/*_log.txt
+data/streamlit_run.log
+
+# 원천 응답(재수집 가능)·로컬 전용 인덱스·모델 캐시
+data/raw/
+data/index/flashrank/
+data/index/faiss_ollama.bin
+data/clip/
+
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# 발표 자료(캡처·스크립트)는 배포에 불필요
+presentation/
