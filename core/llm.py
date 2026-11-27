@@ -28,21 +28,44 @@ def enable_cache() -> None:
         _cache_on = True
 
 
-@lru_cache(maxsize=1)
+_openai_state = {"ok": None, "checked": 0.0, "reason": "확인 전"}
+
+
 def openai_ok() -> bool:
-    """키가 있고 실제로 인증되는지 한 번만 확인한다 (잘못된 키면 로컬 모델로 자동 전환)."""
+    """키가 있고 실제로 호출 가능한지 확인한다.
+
+    성공은 계속 기억하고, 실패는 60초 뒤 다시 확인한다
+    (배포 뒤 Secrets 를 넣거나 크레딧을 충전해도 재시작 없이 반영되도록).
+    """
+    import time
+    st_ = _openai_state
+    if st_["ok"] or (st_["ok"] is False and time.time() - st_["checked"] < 60):
+        return bool(st_["ok"])
     key = secret("OPENAI_API_KEY")
+    st_["checked"] = time.time()
     if not key:
+        st_.update(ok=False, reason="OPENAI_API_KEY 가 없습니다 (Secrets 확인)")
+        return False
+    if not str(key).startswith("sk-"):
+        st_.update(ok=False, reason="키 형식이 sk- 로 시작하지 않습니다")
         return False
     try:
         from openai import OpenAI
         # 인증만이 아니라 '실제 호출 가능(크레딧 잔액)'까지 확인: 1토큰 임베딩, 비용 사실상 0
         OpenAI(api_key=key, timeout=8, max_retries=0).embeddings.create(
             model=OPENAI_EMBED_MODEL, input="ok")
+        st_.update(ok=True, reason="정상")
         return True
     except Exception as e:
-        applog.log.warning("OpenAI 사용 불가 → 로컬 모델 사용: %s", type(e).__name__)
+        code = getattr(e, "status_code", "")
+        reason = {401: "인증 실패(키 확인)", 429: "크레딧 부족 또는 호출 한도"}.get(code, type(e).__name__)
+        st_.update(ok=False, reason=f"{reason} {code}".strip())
+        applog.log.warning("OpenAI 사용 불가 → 로컬 모델 사용: %s", st_["reason"])
         return False
+
+
+def openai_reason() -> str:
+    return _openai_state["reason"]
 
 
 def current_provider() -> str:

@@ -114,7 +114,9 @@ def provider_selector() -> str:
     if ollama_alive():
         opts.append("ollama")
     if not opts:
-        st.sidebar.error("사용 가능한 AI 모델이 없습니다 (OpenAI 키 또는 로컬 Ollama 필요)")
+        from core.llm import openai_reason
+        st.sidebar.error(f"사용 가능한 AI 모델이 없습니다\n\nOpenAI: {openai_reason()}\n\n"
+                         "1분 뒤 새로고침하면 다시 확인합니다.")
         return "none"
     labels = {"openai": "☁️ OpenAI gpt-4o-mini", "ollama": "🖥️ 로컬 qwen3.5 (Ollama)"}
     cur = os.getenv("NAMDO_PROVIDER", opts[0])
