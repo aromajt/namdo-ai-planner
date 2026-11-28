@@ -22,6 +22,7 @@ from core import db, geo, retriever, weather
 from core.config import MAX_INPUT_CHARS
 from core.llm import UsageLogger, chat
 
+PLANNER_VERSION = "v2 시간대 정렬"   # 배포 앱이 새 코드를 실제로 읽었는지 화면에서 확인용
 INDOOR_TYPES = {"14", "38"}          # 문화시설·쇼핑 (비 오는 날 우선)
 MAX_ATTEMPTS = 2
 

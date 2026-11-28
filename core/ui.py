@@ -105,6 +105,34 @@ def ollama_alive() -> bool:
         return False
 
 
+def repo_commit() -> str:
+    """서버에 받아진 코드의 git 커밋 번호 (git 명령 없이 .git 파일을 직접 읽음)."""
+    from core.config import ROOT
+    g = ROOT / ".git"
+    try:
+        head = (g / "HEAD").read_text(encoding="utf-8").strip()
+        if not head.startswith("ref:"):
+            return head[:7]
+        ref = head.split(" ", 1)[1]
+        f = g / ref
+        if f.exists():
+            return f.read_text(encoding="utf-8").strip()[:7]
+        for line in (g / "packed-refs").read_text(encoding="utf-8").splitlines():
+            if line.endswith(" " + ref):
+                return line[:7]
+    except Exception:
+        pass
+    return "알 수 없음"
+
+
+def version_caption() -> None:
+    """사이드바 맨 아래: 받은 코드(커밋) · 실행 중인 플래너 버전 · 프로세스 시작 시각."""
+    from core import planner
+    from core.config import PROCESS_STARTED
+    running = getattr(planner, "PLANNER_VERSION", "v1 이전 코드")
+    st.sidebar.caption(f"버전 {repo_commit()} · 플래너 {running} · 시작 {PROCESS_STARTED}")
+
+
 def provider_selector() -> str:
     """사이드바: OpenAI(클라우드) ↔ Ollama(로컬) 모델 전환."""
     from core.llm import openai_ok

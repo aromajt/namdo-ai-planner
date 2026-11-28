@@ -9,6 +9,10 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# 이 파이썬 프로세스가 시작된 시각 (배포 앱이 실제로 재시작됐는지 확인용)
+import datetime as _dt
+PROCESS_STARTED = _dt.datetime.now(_dt.timezone(_dt.timedelta(hours=9))).strftime("%m-%d %H:%M")
 DATA = ROOT / "data"
 RAW = DATA / "raw"
 TOUR_DB = DATA / "tour.db"          # 관광 원천 데이터 (읽기 위주)

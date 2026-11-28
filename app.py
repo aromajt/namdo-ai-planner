@@ -6,7 +6,7 @@ import streamlit as st
 
 st.set_page_config(page_title="남도ON AI 여행 플래너", page_icon="🌿", layout="wide")
 
-from core.ui import provider_selector  # noqa: E402  (set_page_config 이후 import)
+from core.ui import provider_selector, version_caption  # noqa: E402  (set_page_config 이후 import)
 
 pages = {
     "서비스": [
@@ -25,4 +25,6 @@ pages = {
 st.sidebar.markdown("## 🌿 남도ON AI")
 st.sidebar.caption("데이터로 근거를 대고, AI로 계획하는 남도 여행")
 provider_selector()
-st.navigation(pages).run()
+nav = st.navigation(pages)
+version_caption()
+nav.run()
