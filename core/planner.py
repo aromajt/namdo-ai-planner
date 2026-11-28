@@ -202,6 +202,21 @@ def planner_agent(state: PlanState) -> PlanState:
             "trace": [f"🗓️ 일정 작성: {len(plan.days)}일 일정 초안" + (f" (재작성 {n - 1}회차)" if n > 1 else "")]}
 
 
+SLOT_ORDER = ["오전", "점심 후", "오후", "저녁"]
+
+
+def order_by_slot(stops: list[dict]) -> list[dict]:
+    """시간대 순서(오전→점심 후→오후→저녁)를 지키고, 같은 시간대 안에서만 가까운 순으로 정렬."""
+    out: list[dict] = []
+    for slot in SLOT_ORDER + [None]:
+        group = [s for s in stops if (s.get("slot") == slot) or (slot is None and s.get("slot") not in SLOT_ORDER)]
+        if not group:
+            continue
+        start = (out[-1]["lat"], out[-1]["lon"]) if out else None
+        out += geo.order_route(group, start)
+    return out
+
+
 def route_agent(state: PlanState) -> PlanState:
     by_id = {c["key"]: c for c in state["candidates"]}
     days = []
@@ -211,12 +226,12 @@ def route_agent(state: PlanState) -> PlanState:
             c = by_id.get(s["key"].strip().upper())
             if c:
                 stops.append({**c, "reason": s["reason"], "slot": s["slot"]})
-        ordered = geo.order_route(stops)
+        ordered = order_by_slot(stops)
         km = geo.route_km(ordered)
         days.append({"day": d["day"], "theme": d["theme"], "stops": ordered,
                      "km": round(km, 1), "minutes": geo.drive_minutes(km)})
     total = sum(d["km"] for d in days)
-    return {"days": days, "trace": [f"🗺️ 동선 정렬: Haversine 최근접 순서, 총 이동 약 {total:.1f}km(직선)"]}
+    return {"days": days, "trace": [f"🗺️ 동선 정렬: 시간대 순서 + Haversine 최근접, 총 이동 약 {total:.1f}km(직선)"]}
 
 
 def validator_agent(state: PlanState) -> PlanState:
@@ -282,7 +297,7 @@ def repair_agent(state: PlanState) -> PlanState:
             d["stops"].append({**nxt, "reason": "가까운 동선을 위해 자동으로 보완한 장소", "slot": "오후"})
             used.add(nxt["key"])
             added += 1
-        d["stops"] = geo.order_route(d["stops"])
+        d["stops"] = order_by_slot(d["stops"])
         d["km"] = round(geo.route_km(d["stops"]), 1)
         d["minutes"] = geo.drive_minutes(d["km"])
     return {"days": days, "issues": [],

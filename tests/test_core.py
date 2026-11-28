@@ -106,3 +106,9 @@ def test_evidence_sentence_uses_exact_db_numbers():
     text = planner.evidence_sentence(ev, 11)
     assert f"{ev['11월 외지인 일평균 추정 방문']:,}명" in text
     assert "관광빅데이터" in text
+
+
+def test_order_by_slot_keeps_time_order():
+    stops = [{"slot": "오후", "lat": 0, "lon": 0, "n": "C"}, {"slot": "오전", "lat": 0, "lon": 5, "n": "A"},
+             {"slot": "점심 후", "lat": 0, "lon": 1, "n": "B"}, {"slot": "저녁", "lat": 0, "lon": 9, "n": "D"}]
+    assert [s["n"] for s in planner.order_by_slot(stops)] == ["A", "B", "C", "D"]

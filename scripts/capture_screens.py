@@ -22,8 +22,12 @@ def settle(page, ms=1500):
     page.wait_for_timeout(ms)
 
 
-def shot(page, name, full=False):
+def shot(page, name, full=False, text=False):
     page.screenshot(path=str(OUT / f"{name}.png"), full_page=full)
+    if text:  # 슬라이드 문구를 실제 결과와 맞추기 위해 화면 글자도 저장
+        (OUT / f"{name}.txt").write_text((page.locator('[data-testid="stMain"]').inner_text(timeout=3000)
+                                                     if page.locator('[data-testid="stMain"]').count()
+                                                     else page.inner_text("body")), encoding="utf-8")
     print("saved", name)
 
 
@@ -58,7 +62,7 @@ def main(only: set[str]):
             page.locator("h3").filter(has_text="일차").first.scroll_into_view_if_needed()
             page.mouse.wheel(0, -560)
             page.wait_for_timeout(2500)
-            shot(page, "planner_top")
+            shot(page, "planner_top", text=True)
             page.locator("h3").filter(has_text="1일차").first.scroll_into_view_if_needed()
             page.mouse.wheel(0, -40)
             page.wait_for_timeout(2500)
@@ -68,7 +72,7 @@ def main(only: set[str]):
             page.get_by_text("에이전트 활동 기록").scroll_into_view_if_needed()
             page.mouse.wheel(0, 200)
             page.wait_for_timeout(800)
-            shot(page, "planner_trace")
+            shot(page, "planner_trace", text=True)
 
         if not only or "chat" in only:
             go("/chatbot")
@@ -81,7 +85,7 @@ def main(only: set[str]):
                 settle(page, 1500)
             page.mouse.wheel(0, 2000)
             page.wait_for_timeout(1000)
-            shot(page, "chatbot")
+            shot(page, "chatbot", text=True)
 
         if not only or "photo" in only:
             for mode, name in [("CLIP", "photo_clip"), ("AI 비전", "photo_vision")]:
@@ -93,7 +97,7 @@ def main(only: set[str]):
                 settle(page, 4000)
                 page.mouse.wheel(0, 330)
                 page.wait_for_timeout(1500)
-                shot(page, name)
+                shot(page, name, text=True)
 
         if not only or "admin" in only:
             go("/admin")
@@ -101,7 +105,7 @@ def main(only: set[str]):
             page.get_by_role("button", name="로그인").click()
             page.get_by_text("AI 호출").first.wait_for(timeout=30000)
             settle(page, 3000)
-            shot(page, "admin")
+            shot(page, "admin", text=True)
 
         b.close()
 
